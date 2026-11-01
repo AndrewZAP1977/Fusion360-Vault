@@ -1,0 +1,1221 @@
+<!doctype html>
+<html lang="ru" data-f360-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>F360 Vault</title>
+  <style>
+    :root { font-family: "Segoe UI", Arial, sans-serif; font-size: 13px; color: #e8eef5; color-scheme: dark; }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; overflow: hidden; }
+    body { background: #20252b; }
+    button, input { font: inherit; }
+    button { color: #e8eef5; background: #343f49; border: 1px solid #4b5a66; border-radius: 4px; cursor: pointer; }
+    button:hover:not(:disabled) { background: #43515d; }
+    button:disabled { opacity: .48; cursor: default; }
+    input[type="checkbox"], input[type="radio"] { accent-color: #4b91d1; }
+    .shell { height: 100vh; display: flex; flex-direction: column; min-height: 0; }
+    .top { height: 48px; flex: none; padding: 8px 12px 7px; display: flex; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid #3c4650; }
+    .name { font-size: 17px; line-height: 20px; font-weight: 600; }
+    .version { color: #aebdca; font-size: 11px; line-height: 15px; }
+    .mode { color: #b8c7d4; font-size: 11px; border: 1px solid #44525e; border-radius: 3px; padding: 4px 6px; white-space: nowrap; }
+    .tabs { display: flex; flex: none; height: 35px; padding: 0 9px; border-bottom: 1px solid #43505b; gap: 3px; }
+    .tab { border: none; border-bottom: 2px solid transparent; border-radius: 0; background: transparent; padding: 0 12px; font-size: 12px; color: #bbc9d6; }
+    .tab:hover:not(:disabled) { background: #2b3640; }
+    .tab[aria-selected="true"] { border-bottom-color: #67a9ec; color: white; font-weight: 600; }
+    .page { display: none; min-height: 0; flex: 1; flex-direction: column; }
+    .page.active { display: flex; }
+    .toolbar { display: flex; align-items: center; gap: 8px; padding: 8px 11px; flex: none; border-bottom: 1px solid #38434e; }
+    .compact-button { padding: 5px 9px; font-size: 12px; min-height: 27px; }
+    .hint { color: #b1c0ce; font-size: 11px; }
+    .hint strong { color: #e8eef5; }
+    .grow { flex: 1; }
+    .selection-bar { flex: none; display: flex; gap: 9px; align-items: center; padding: 7px 11px; border-bottom: 1px solid #36414c; }
+    .selection-bar label { font-size: 12px; }
+    .tree { min-height: 0; flex: 1; overflow-y: auto; overflow-x: hidden; padding: 4px 0 12px; }
+    .tree-row { display: flex; align-items: center; gap: 6px; min-height: 28px; padding: 2px 10px 2px 7px; border-bottom: 1px solid rgba(160,183,198,.07); }
+    .tree-row:hover { background: #2b353e; }
+    .tree-row.dim { opacity: .7; }
+    .expander { width: 22px; height: 23px; flex: none; border: none; background: transparent; text-align: center; padding: 0; font-size: 14px; }
+    .tree-row input[type="checkbox"] { margin: 0 2px 0 0; flex: none; }
+    .tree-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; flex: 1; }
+    .tree-icon { color: #99b4c8; font-size: 12px; }
+    .tree-count { margin-left: 4px; font-size: 11px; color: #9fb0bf; flex: none; }
+    .file-row { padding: 4px 14px; font-size: 11px; color: #c7d4df; overflow-wrap: anywhere; border-bottom: 1px solid rgba(160,183,198,.06); }
+    .file-icon { color: #a9b9c7; margin-right: 5px; }
+    .empty { margin: 16px 13px; color: #b1c0ce; font-size: 12px; line-height: 1.45; }
+    .message { font-size: 11px; margin: 0; overflow-wrap: anywhere; color: #b6c4d1; }
+    .message.error { color: #f3a3a3; }
+    .options { min-height: 0; flex: 1; overflow: auto; padding: 5px 12px 15px; }
+    .group { padding: 12px 0 11px; border-bottom: 1px solid #3a454e; }
+    .group h2 { margin: 0 0 8px; font-size: 12px; font-weight: 600; }
+    .group small { color: #aebdca; display: block; margin-top: 5px; line-height: 1.45; }
+    .form-row { display: flex; align-items: center; gap: 8px; }
+    .form-row input[type="text"] { min-width: 0; flex: 1; padding: 6px 7px; background: #292f36; color: #c8d3de; border: 1px solid #4b5a66; border-radius: 4px; }
+    .checks { display: grid; grid-template-columns: 1fr 1fr; column-gap: 12px; row-gap: 9px; }
+    .checks label, .radios label { display: flex; align-items: center; gap: 6px; }
+    .radios { display: flex; gap: 15px; }
+    .preview-results { font-size: 11px; line-height: 1.45; margin-top: 8px; overflow-wrap: anywhere; }
+    .preview-results .preview-item { padding: 3px 0; border-bottom: 1px solid #dce1e6; }
+    :root[data-f360-theme="dark"] .preview-results .preview-item { border-bottom-color: #48545f; }
+    .log-area { overflow-y: auto; flex: 1; min-height: 0; padding: 7px 12px 15px; }
+    .log-line { font-size: 12px; line-height: 1.55; padding: 4px 0; border-bottom: 1px solid #36414c; overflow-wrap: anywhere; }
+    .log-time { color: #a4b4c1; margin-right: 9px; }
+    .footer { flex: none; height: 45px; display: flex; gap: 10px; align-items: center; justify-content: space-between; padding: 7px 11px; border-top: 1px solid #48545f; background: #242b31; }
+    .primary { padding: 6px 12px; background: #376b9d; border-color: #376b9d; }
+    .primary:disabled { opacity: .5; }
+    .footer-count { color: #c3d1dc; font-size: 12px; }
+    /* v0.3.0-dev3: Fusion-like light theme; keep existing dark CSS as fallback. */
+    :root[data-f360-theme="light"] { color-scheme: light; color: #31363b; }
+    :root[data-f360-theme="light"] body,
+    :root[data-f360-theme="light"] .shell { background: #f4f5f6; color: #31363b; }
+    :root[data-f360-theme="light"] button { background: #f7f8f9; color: #30363b; border-color: #bcc4cb; }
+    :root[data-f360-theme="light"] button:hover:not(:disabled) { background: #e6ecf1; }
+    :root[data-f360-theme="light"] .top,
+    :root[data-f360-theme="light"] .tabs,
+    :root[data-f360-theme="light"] .toolbar,
+    :root[data-f360-theme="light"] .selection-bar { background: #f7f8f9; border-color: #d2d7dc; }
+    :root[data-f360-theme="light"] .top { background: #f2f3f4; }
+    :root[data-f360-theme="light"] .name { color: #29323a; }
+    :root[data-f360-theme="light"] .version,
+    :root[data-f360-theme="light"] .hint,
+    :root[data-f360-theme="light"] .mode,
+    :root[data-f360-theme="light"] .tree-count,
+    :root[data-f360-theme="light"] .tree-icon,
+    :root[data-f360-theme="light"] .file-icon,
+    :root[data-f360-theme="light"] .log-time,
+    :root[data-f360-theme="light"] .group small,
+    :root[data-f360-theme="light"] .message,
+    :root[data-f360-theme="light"] .footer-count { color: #58646e; }
+    :root[data-f360-theme="light"] .hint strong { color: #31363b; }
+    :root[data-f360-theme="light"] .mode { background: #e9edf0; border-color: #cbd2d8; }
+    :root[data-f360-theme="light"] .tab { background: transparent; border-color: transparent; color: #4c5963; }
+    :root[data-f360-theme="light"] .tab:hover:not(:disabled) { background: #e7ecef; }
+    :root[data-f360-theme="light"] .tab[aria-selected="true"] { color: #245e91; border-bottom-color: #337ab7; }
+    :root[data-f360-theme="light"] .tree-row,
+    :root[data-f360-theme="light"] .file-row { border-bottom-color: #e3e6e9; color: #30363b; }
+    :root[data-f360-theme="light"] .tree-row:hover { background: #e5ebef; }
+    :root[data-f360-theme="light"] .expander { background: transparent; border-color: transparent; }
+    :root[data-f360-theme="light"] .file-row { color: #58646e; }
+    :root[data-f360-theme="light"] .empty { color: #65717a; }
+    :root[data-f360-theme="light"] .message.error { color: #b12d2d; }
+    :root[data-f360-theme="light"] .group,
+    :root[data-f360-theme="light"] .log-line { border-color: #dbe0e4; }
+    :root[data-f360-theme="light"] .form-row input[type="text"] {
+      background: #fff; color: #30363b; border-color: #b8c2ca;
+    }
+    :root[data-f360-theme="light"] .footer { background: #eef0f2; border-color: #cbd1d7; }
+    :root[data-f360-theme="light"] .primary { background: #2877b6; color: #fff; border-color: #2877b6; }
+    :root[data-f360-theme="light"] .primary:hover:not(:disabled) { background: #21689f; }
+
+  /* Dev8: two-tab release-oriented layout; operational audit remains internal. */
+  .tab[data-tab="journal"] { display: none !important; }
+  #page-journal { display: none !important; }
+  #preview-group { display: none !important; }
+  #release-progress { padding: 12px 13px; margin: 18px 0 0; border-top: 1px solid var(--border, #d9dfe4); }
+  #release-progress h2 { font-size: 13px; font-weight: 600; margin: 0 0 9px; }
+  #release-meter { width: 100%; height: 8px; border-radius: 6px; background: #c7cfd6; overflow: hidden; margin: 7px 0; }
+  #release-meter-fill { display: block; height: 100%; width: 0; background: #2679b8; transition: width .2s; }
+  #release-line, #release-model, #release-counts, #release-warning { font-size: 12px; line-height: 1.45; overflow-wrap: anywhere; margin: 5px 0; }
+  #release-model { font-weight: 500; }
+  #release-warning { color: #ad5b0b; }
+  #release-actions { margin: 10px 0 0; display: flex; flex-wrap: wrap; gap: 6px; }
+  #release-actions button { min-width: 65px; }
+  #release-report-path { font-size: 11px; overflow-wrap: anywhere; margin-top: 6px; }
+  .footer #refresh-projects { min-width: 75px; font-size: 12px; padding: 7px 13px; }
+  /* Dev8.1 fixed progress region; every control has a reserved slot. */
+  #release-progress { height: 310px; min-height: 310px; max-height: 310px;
+    box-sizing: border-box; overflow: hidden; }
+  #release-line { height: 21px; max-height: 21px; overflow: hidden; white-space: nowrap;
+    text-overflow: ellipsis; }
+  #release-model { height: 35px; min-height: 35px; max-height: 35px;
+    overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical; word-break: break-word; }
+  #release-counts { height: 20px; max-height: 20px; overflow: hidden;
+    white-space: nowrap; text-overflow: ellipsis; }
+  #release-warning { height: 38px; max-height: 38px; overflow: hidden;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  #release-actions { height: 31px; min-height: 31px; max-height: 31px; }
+  #release-report-button { margin-top: 7px !important; height: 26px; min-height: 26px; }
+  #release-confirm-overlay { display: none; position: fixed; inset: 0; z-index: 1000;
+    background: rgba(0, 0, 0, .30); align-items: center; justify-content: center; }
+  #release-confirm-overlay.open { display: flex; }
+  #release-confirm-dialog { background: var(--surface, #fff); color: var(--text, #202933);
+    width: calc(100% - 48px); max-width: 365px; padding: 16px;
+    border-radius: 8px; box-shadow: 0 7px 32px rgba(0,0,0,.30);
+    max-height: calc(100vh - 52px); overflow: auto; box-sizing: border-box; }
+  #release-confirm-dialog h2 { margin: 0 0 10px; font-size: 15px; }
+  #release-confirm-dialog .confirm-detail { margin: 6px 0; font-size: 12px; overflow-wrap:anywhere; }
+  #release-confirm-dialog .confirm-actions { display:flex; justify-content:flex-end; gap:8px; margin-top: 14px; }
+  #aps-connection-bar { padding: 12px 13px; border-top: 1px solid var(--f360-divider, #dddddd); font-size: 12px; min-height: 94px; box-sizing: border-box; }
+  #aps-connection-bar strong { font-size: 12px; }
+  #aps-connect-status { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; flex: 1; }
+  #aps-connection-bar .form-row { display: flex; align-items: center; gap: 9px; }
+  #aps-connection-bar small { display: block; margin-top: 7px; opacity: .72; line-height: 1.3; }
+  /* dev9.1: compact, stable progress and source-side APS connection. */
+  #release-progress { height: 268px !important; min-height: 268px !important;
+    max-height: 268px !important; margin-top: 9px !important; }
+  #aps-connection-bar { min-height: 86px; height: auto; border-top: 1px solid var(--f360-divider, #dddddd);
+    border-bottom: 1px solid var(--f360-divider, #dddddd); padding: 10px 13px; }
+  #aps-connect-status { font-weight: 650; padding: 4px 7px; border-radius: 4px; opacity: 1;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #aps-connect-status.aps-ready { color: #086434 !important; background: #e0f2e7; }
+  #aps-connect-status.aps-offline { color: #844c06 !important; background: #fff0ce; }
+  #aps-connect-status.aps-connecting { color: #114f92 !important; background: #e0edfc; }
+  #aps-connect-status.aps-error { color: #a52219 !important; background: #ffe4df; }
+  #aps-connection-bar .aps-advice { display: block; font-size: 11px; line-height: 1.3;
+    opacity: 1; margin-top: 6px; }
+  #aps-connection-bar .aps-advice.aps-required { color: #a05808; }
+  #aps-connection-bar .aps-advice.aps-enabled { color: #086434; }
+  html[data-f360-theme="dark"] #aps-connect-status.aps-ready { color: #b9f5d5 !important; background: #16482f; }
+  html[data-f360-theme="dark"] #aps-connect-status.aps-offline { color: #ffe0a3 !important; background: #553b15; }
+  html[data-f360-theme="dark"] #aps-connect-status.aps-connecting { color: #bee0ff !important; background: #1c3c61; }
+  html[data-f360-theme="dark"] #aps-connect-status.aps-error { color: #ffd2cb !important; background: #54211c; }
+  html[data-f360-theme="dark"] #aps-connection-bar .aps-advice.aps-required { color: #ffd79c; }
+  html[data-f360-theme="dark"] #aps-connection-bar .aps-advice.aps-enabled { color: #b9f5d5; }
+  /* dev9.3: individual cloud file selection in any folder, including project root. */
+  .file-row { display:flex; align-items:center; gap:6px; min-height:27px;
+    padding-top:2px; padding-bottom:2px; }
+  .file-row input[type="checkbox"] { flex:none; margin:0 2px 0 0; }
+  .file-row .file-label { flex:1; min-width:0; cursor:pointer;
+    overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+  .file-row.dim { opacity:.70; }
+  </style>
+</head>
+<body>
+<div class="shell">
+  <header class="top">
+    <div><div class="name">F360 Vault</div><div class="version">v0.4.0</div></div>
+
+  </header>
+  <nav class="tabs" aria-label="F360 Vault sections">
+    <button class="tab" type="button" data-tab="sources" aria-selected="true">Sources</button>
+    <button class="tab" type="button" data-tab="export" aria-selected="false">Export</button>
+    <button class="tab" type="button" data-tab="journal" aria-selected="false">Log</button>
+  </nav>
+  <section id="page-sources" class="page active" aria-label="Sources">
+    <div class="toolbar">
+      <span class="hint" id="project-summary">Connecting to Fusion…</span>
+      <span class="grow"></span>
+      <button class="compact-button" id="refresh-projects" type="button" style="width:27px;min-width:27px;padding:3px 0;font-size:16px" title="Refresh projects (clears the current selection)" aria-label="Refresh project list">↻</button>
+    </div>
+    <div class="selection-bar">
+      <label><input id="select-all" type="checkbox" disabled> All projects in the current hub</label>
+    </div>
+    <div class="tree" id="cloud-tree" aria-label="Cloud projects and folders">
+      <div class="empty">Click Refresh to load projects. Expand folders using the arrow to the left of each name.</div>
+    </div>
+  </section>
+  <section id="page-export" class="page" aria-label="Export settings">
+    <div class="options">
+      <div class="group">
+        <h2>Destination folder</h2>
+        <div class="form-row">
+          <input id="output-folder" type="text" readonly value="" placeholder="No folder selected" aria-label="Destination folder">
+          <button class="compact-button" id="choose-output-folder" type="button" title="Choose local folder">…</button>
+        </div>
+        <small id="output-folder-status">Choose a folder on an accessible drive. No files are written yet.</small>
+      </div>
+      <div class="group">
+        <h2>Formats</h2>
+        <div class="checks">
+          <label><input class="format" type="checkbox" value="native" checked> F3D / F3Z</label>
+          <label><input class="format" type="checkbox" value="step"> STEP</label>
+          <label><input class="format" type="checkbox" value="stl"> STL</label>
+          <label><input class="format" type="checkbox" value="3mf"> 3MF</label>
+        </div>
+      </div>
+      <div class="group">
+        <h2>Document versions</h2>
+        <div class="radios">
+          <label><input type="radio" name="versions" value="latest" checked> Latest</label>
+          <label><input type="radio" name="versions" value="all"> All history</label>
+        </div>
+      </div>
+      <div class="group">
+        <h2>Folder structure</h2>
+        <small>Original Fusion 360 project and folder structure is always preserved during export.</small>
+
+      </div>
+    </div>
+      <div class="group" id="preview-group">
+        <h2>Preflight check</h2>
+        <div class="form-row">
+          <button class="compact-button" id="preview-export" type="button" disabled>Check cloud list</button>
+          <span class="hint" id="preview-status">Select sources and wait for settings to load.</span>
+        </div>
+        <small>Cloud data is rescanned. Documents are not opened and models are not exported.</small>
+        <div class="form-row" style="margin-top:9px">
+          <button class="compact-button" id="plan-paths" type="button" disabled>Check paths</button>
+          <span class="hint" id="path-plan-status">Check the cloud list first.</span>
+        </div>
+        <div class="preview-results" id="path-plan-results" aria-live="polite"></div>
+        <div id="preview-results" class="preview-results" aria-live="polite"></div>
+      </div>
+  </section>
+  <section id="page-journal" class="page" aria-label="Log">
+    <div class="toolbar">
+      <button class="compact-button" id="ping" type="button">Check API</button>
+      <span id="api-status" class="message">Not checked</span>
+    </div>
+    <div class="form-row" style="margin:8px 0">
+      <button class="compact-button" id="pause-export" type="button" disabled>Pause</button>
+      <button class="compact-button" id="resume-export" type="button" disabled>Resume</button>
+      <button class="compact-button" id="stop-export" type="button" disabled>Stop</button>
+    </div>
+    <div id="export-run-status" class="hint" aria-live="polite">No export job is running.</div>
+    <div id="log-area" class="log-area" role="log" aria-live="polite"></div>
+  </section>
+  <footer class="footer">
+    <span class="footer-count" id="selection-summary">Selected sources: 0</span>
+    <button class="primary" id="run-export" type="button" disabled title="Export selected sources">Export</button>
+  </footer>
+</div>
+<script>
+(function () {
+  'use strict';
+  var projects = [];
+  var nodes = Object.create(null);
+  var selected = Object.create(null);
+  var pendingNode = null;
+  var loadingProjects = false;
+  var logLines = [];
+  var tree = document.getElementById('cloud-tree');
+  var refreshButton = document.getElementById('refresh-projects');
+  var projectSummary = document.getElementById('project-summary');
+  var selectAll = document.getElementById('select-all');
+  var selectionSummary = document.getElementById('selection-summary');
+  var apiStatus = document.getElementById('api-status');
+  var logArea = document.getElementById('log-area');
+  var activeTab = 'sources';
+
+  function log(message) {
+    logLines.unshift({ time: new Date().toLocaleTimeString('ru-RU'), message: String(message) });
+    if (logLines.length > 60) logLines.pop();
+    renderLog();
+  }
+  function renderLog() {
+    logArea.textContent = '';
+    logLines.forEach(function (line) {
+      var div = document.createElement('div');
+      div.className = 'log-line';
+      var tm = document.createElement('span');
+      tm.className = 'log-time';
+      tm.textContent = line.time;
+      var msg = document.createElement('span');
+      msg.textContent = line.message;
+      div.appendChild(tm); div.appendChild(msg); logArea.appendChild(div);
+    });
+  }
+  function send(action, payload) {
+    if (!window.adsk || typeof window.adsk.fusionSendData !== 'function') {
+      throw new Error('Fusion HTML bridge is unavailable');
+    }
+    window.adsk.fusionSendData(action, JSON.stringify(payload || {}));
+  }
+  var outputFolderInput = document.getElementById('output-folder');
+  var chooseOutputFolder = document.getElementById('choose-output-folder');
+  var outputFolderStatus = document.getElementById('output-folder-status');
+  chooseOutputFolder.addEventListener('click', function () {
+    if (chooseOutputFolder.disabled) return;
+    chooseOutputFolder.disabled = true;
+    outputFolderStatus.textContent = 'Opening folder picker…';
+    try {
+      send('choose_output_folder', {});
+    } catch (err) {
+      chooseOutputFolder.disabled = false;
+      outputFolderStatus.textContent = 'Could not open the folder dialog.';
+      log('Folder selection error: ' + String(err));
+    }
+  });
+  function showOutputFolder(result) {
+    chooseOutputFolder.disabled = false;
+    if (!result || !result.ok) {
+      outputFolderStatus.textContent = 'Folder selection error (see Log).';
+      log('Fusion FolderDialog error: ' + ((result && result.error) || 'no details'));
+      return;
+    }
+    if (result.cancelled) {
+      outputFolderStatus.textContent = outputFolderInput.value
+        ? 'Selection canceled; previous folder retained.' : 'No folder selected.';
+      return;
+    }
+    if (typeof result.path !== 'string' || !result.path) {
+      outputFolderStatus.textContent = 'Fusion did not return the folder path.';
+      log('Invalid folder dialog response.');
+      return;
+    }
+    outputFolderInput.value = result.path;
+    outputFolderInput.title = result.path;
+    outputFolderStatus.textContent = 'Folder selected. Check settings before exporting.';
+    log('Destination folder: ' + result.path);
+    saveExportSettings();
+  }
+  // Acknowledge the Fusion connection before loading persisted configuration.
+  var settingsReady = false;
+  var settingsSaveBusy = false;
+  var settingsSaveQueued = false;
+  var formatControls = Array.prototype.slice.call(document.querySelectorAll('input.format'));
+  var versionControls = Array.prototype.slice.call(document.querySelectorAll('input[name="versions"]'));
+  function enableSettings(enabled) {
+    chooseOutputFolder.disabled = !enabled;
+    formatControls.forEach(function (element) { element.disabled = !enabled; });
+    versionControls.forEach(function (element) { element.disabled = !enabled; });
+  }
+  function currentExportSettings() {
+    return {
+      schema_version: 1,
+      output_folder: outputFolderInput.value,
+      formats: formatControls.filter(function (element) { return element.checked; })
+        .map(function (element) { return element.value; }),
+      version_mode: (versionControls.filter(function (element) { return element.checked; })[0] || {}).value || 'latest'
+    };
+  }
+  function saveExportSettings() {
+    invalidatePreview();
+    if (!settingsReady) return;
+    if (!currentExportSettings().formats.length) {
+      log('Select at least one export format.');
+      return;
+    }
+    if (settingsSaveBusy) { settingsSaveQueued = true; return; }
+    settingsSaveBusy = true;
+    updatePreviewAvailability();
+    try { send('save_export_settings', currentExportSettings()); }
+    catch (err) {
+      settingsSaveBusy = false;
+      updatePreviewAvailability();
+      outputFolderStatus.textContent = 'Settings not saved: connection error.';
+      log('Unable to save settings: ' + String(err));
+    }
+  }
+  function showExportSettings(result) {
+    if (!result || !result.ok || !result.settings) {
+      outputFolderStatus.textContent = 'Could not read settings; editing blocked. See Log.';
+      log('Unable to read settings.json: ' + ((result && result.error) || 'no details'));
+      return;
+    }
+    var settings = result.settings;
+    if (typeof settings.output_folder !== 'string' || !Array.isArray(settings.formats) ||
+        (settings.version_mode !== 'latest' && settings.version_mode !== 'all')) {
+      outputFolderStatus.textContent = 'Invalid settings format; editing blocked.';
+      log('Invalid load_export_settings response.');
+      return;
+    }
+    outputFolderInput.value = settings.output_folder;
+    outputFolderInput.title = settings.output_folder;
+    formatControls.forEach(function (element) {
+      element.checked = settings.formats.indexOf(element.value) >= 0;
+    });
+    versionControls.forEach(function (element) { element.checked = element.value === settings.version_mode; });
+    settingsReady = true;
+    enableSettings(true);
+    outputFolderStatus.textContent = settings.output_folder
+      ? 'Settings loaded. Confirm destination before exporting.'
+      : 'Choose a destination folder. Settings are stored by the add-in.';
+    log('F360 Vault settings loaded from data.');
+    updatePreviewAvailability();
+  }
+  function showSettingsSaved(result) {
+    settingsSaveBusy = false;
+    if (!result || !result.ok) {
+      outputFolderStatus.textContent = 'Unable to save settings. See Log for details.';
+      log('Failed writing settings.json: ' + ((result && result.error) || 'no details'));
+      settingsSaveQueued = false;
+      updatePreviewAvailability();
+      return;
+    }
+    if (settingsSaveQueued) {
+      settingsSaveQueued = false;
+      saveExportSettings();
+    } else {
+      outputFolderStatus.textContent = 'Settings saved to F360Vault/data/settings.json.';
+    }
+    updatePreviewAvailability();
+  }
+  formatControls.forEach(function (element) {
+    element.addEventListener('change', function () {
+      if (!currentExportSettings().formats.length) {
+        element.checked = true;
+        log('At least one format must remain selected.');
+        return;
+      }
+      saveExportSettings();
+    });
+  });
+  versionControls.forEach(function (element) {
+    element.addEventListener('change', function () { if (element.checked) saveExportSettings(); });
+  });
+  enableSettings(false);
+  // Preview reads the cloud again, independently of expanded tree nodes.
+  var previewButton = document.getElementById('preview-export');
+  var previewStatus = document.getElementById('preview-status');
+  var previewResults = document.getElementById('preview-results');
+  var previewBusy = false;
+  var previewValid = false;
+  var previewRequestSignature = '';
+  var pathPlanButton = document.getElementById('plan-paths');
+  var pathPlanStatus = document.getElementById('path-plan-status');
+  var pathPlanResults = document.getElementById('path-plan-results');
+  var pathPlanBusy = false;
+  var pathPlanSignature = '';
+  var previewCreatedUtc = '';
+  function currentPreviewSignature() {
+    return JSON.stringify({sources: previewSources(), settings: currentExportSettings()});
+  }
+  function invalidatePreview() {
+    pathPlanButton.disabled = true;
+    pathPlanResults.textContent = '';
+    pathPlanStatus.textContent = 'Selection changed; check again.';
+    previewCreatedUtc = '';
+    if (!previewValid) return;
+    previewValid = false;
+    previewResults.textContent = '';
+    previewStatus.textContent = 'Selection changed; refresh cloud list.';
+  }
+  function updatePreviewAvailability() {
+    previewButton.disabled = previewBusy || pathPlanBusy || !settingsReady || loadingProjects ||
+      !!pendingNode || selectedCount() === 0;
+    pathPlanButton.disabled = previewBusy || pathPlanBusy || !previewValid || !previewCreatedUtc;
+    exportButton.disabled = exportBusy || previewBusy || pathPlanBusy || settingsSaveBusy ||
+      !settingsReady || loadingProjects || !!pendingNode || selectedCount() === 0 ||
+      !outputFolderInput.value || !currentExportSettings().formats.length;
+  }
+  function previewSources() {
+    return Object.keys(selected).filter(function (key) {
+      return !!selected[key] && !!nodes[key];
+    }).map(function (key) {
+      var node = nodes[key];
+      var descriptor = {
+        kind: node.kind,
+        project_id: node.projectId,
+        folder_id: node.kind === 'folder' ? node.id :
+          node.kind === 'file' && node.parent && node.parent.kind === 'folder' ? node.parent.id : null
+      };
+      if (node.kind === 'file') descriptor.file_id = node.id;
+      return descriptor;
+    });
+  }
+  previewButton.addEventListener('click', function () {
+    if (previewButton.disabled || previewBusy) return;
+    previewBusy = true;
+    previewValid = false;
+    previewCreatedUtc = '';
+    pathPlanButton.disabled = true;
+    pathPlanResults.textContent = '';
+    pathPlanStatus.textContent = 'Wait for the updated cloud list.';
+    previewResults.textContent = '';
+    previewStatus.textContent = 'Checking cloud library…';
+    updatePreviewAvailability();
+    previewRequestSignature = currentPreviewSignature();
+    try { send('preview_export_plan', JSON.parse(previewRequestSignature)); }
+    catch (err) {
+      previewBusy = false;
+      previewStatus.textContent = 'No Fusion connection. See Log.';
+      log('Cloud check request failed: ' + String(err));
+      updatePreviewAvailability();
+    }
+  });
+  function showExportPreview(result) {
+    previewBusy = false;
+    previewResults.textContent = '';
+    if (previewRequestSignature !== currentPreviewSignature()) {
+      previewValid = false;
+      previewStatus.textContent = 'Sources or settings changed; check again.';
+      log('Cloud preview is stale after settings or selection changed.');
+      updatePreviewAvailability();
+      return;
+    }
+    if (!result || !result.ok) {
+      previewValid = false;
+      previewStatus.textContent = 'Check failed. See Log.';
+      log('Cloud check error: ' + ((result && result.error) || 'no details'));
+      updatePreviewAvailability();
+      return;
+    }
+    previewValid = true;
+    previewCreatedUtc = result.created_utc || '';
+    pathPlanStatus.textContent = 'Ready to check local paths.';
+    previewStatus.textContent = 'Ready. Documents: ' + result.documents_count +
+      ', versions: ' + result.versions_count + ', folders: ' + result.folders_scanned;
+    var intro = document.createElement('div');
+    intro.textContent = 'Duplicate entries skipped: ' + result.duplicates_skipped +
+      '. Full list: F360Vault/data/state/last_preview.json';
+    previewResults.appendChild(intro);
+    (result.sample || []).forEach(function (item) {
+      var line = document.createElement('div');
+      line.className = 'preview-item';
+      line.textContent = item.project + ' / ' + item.folder_path.join(' / ') +
+        (item.folder_path.length ? ' / ' : '') + item.name +
+        ' — v' + item.latest_version + ' (' + item.versions + ' versions)';
+      previewResults.appendChild(line);
+    });
+    log('Cloud check finished: documents ' + result.documents_count +
+      ', versions ' + result.versions_count + '.');
+    updatePreviewAvailability();
+  }
+  pathPlanButton.addEventListener('click', function () {
+    if (pathPlanButton.disabled || pathPlanBusy || !previewValid || !previewCreatedUtc) return;
+    pathPlanBusy = true;
+    pathPlanResults.textContent = '';
+    pathPlanStatus.textContent = 'Checking local paths…';
+    pathPlanSignature = currentPreviewSignature();
+    updatePreviewAvailability();
+    var request = JSON.parse(pathPlanSignature);
+    request.preview_created_utc = previewCreatedUtc;
+    try { send('plan_local_paths', request); }
+    catch (err) {
+      pathPlanBusy = false;
+      pathPlanStatus.textContent = 'Connection error. See Log.';
+      log('Path check error: ' + String(err));
+      updatePreviewAvailability();
+    }
+  });
+  function showLocalPathPlan(result) {
+    pathPlanBusy = false;
+    pathPlanResults.textContent = '';
+    if (pathPlanSignature !== currentPreviewSignature() || !previewValid) {
+      pathPlanStatus.textContent = 'Sources changed; refresh cloud list.';
+      updatePreviewAvailability();
+      return;
+    }
+    if (!result || !result.ok) {
+      pathPlanStatus.textContent = 'Path check failed. See Log.';
+      log('Path layout error: ' + ((result && result.error) || 'no details'));
+      updatePreviewAvailability();
+      return;
+    }
+    pathPlanStatus.textContent = 'Checked: ' + result.planned_items + ' paths.';
+    var report = document.createElement('div');
+    report.textContent = 'Existing: ' + result.occupied_items +
+      ', too long: ' + result.blocked_items +
+      ', F3D/F3Z pending: ' + result.native_pending_items +
+      '. Report: ' + result.path_plan;
+    pathPlanResults.appendChild(report);
+    (result.renaming_examples || []).forEach(function (message) {
+      var row = document.createElement('div');
+      row.className = 'preview-item';
+      row.textContent = message;
+      pathPlanResults.appendChild(row);
+    });
+    log('Local paths checked. Existing: ' + result.occupied_items +
+      ', path-length limitations: ' + result.blocked_items + '.');
+    updatePreviewAvailability();
+  }
+  function setTab(name) {
+    activeTab = name;
+    Array.prototype.forEach.call(document.querySelectorAll('[data-tab]'), function (button) {
+      button.setAttribute('aria-selected', button.getAttribute('data-tab') === name ? 'true' : 'false');
+    });
+    ['sources', 'export', 'journal'].forEach(function (id) {
+      document.getElementById('page-' + id).className = 'page' + (name === id ? ' active' : '');
+    });
+    releaseUpdateView(name);
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('[data-tab]'), function (button) {
+    button.addEventListener('click', function () { setTab(button.getAttribute('data-tab')); });
+  });
+  function makeNode(kind, projectId, id, name, parent) {
+    var key = kind + ':' + projectId + (kind === 'folder' || kind === 'file' ? ':' + id : '');
+    var node = { key:key, kind:kind, projectId:projectId, id:id, name:name,
+      parent:parent, expanded:false, loaded:false, loading:false,
+      children:[], files:[] };
+    nodes[key] = node;
+    return node;
+  }
+  function isDescendant(node, ancestor) {
+    for (var current = node.parent; current; current = current.parent) {
+      if (current.key === ancestor.key) return true;
+    }
+    return false;
+  }
+  function inheritedSelection(node) {
+    for (var current = node.parent; current; current = current.parent) {
+      if (selected[current.key]) return true;
+    }
+    return false;
+  }
+  function hasSelectedDescendant(node) {
+    return Object.keys(selected).some(function (key) {
+      return !!selected[key] && !!nodes[key] && isDescendant(nodes[key], node);
+    });
+  }
+  function selectionPaths() {
+    return Object.keys(selected).filter(function (key) { return !!selected[key] && !!nodes[key]; })
+      .map(function (key) {
+        var names = [];
+        for (var current = nodes[key]; current; current = current.parent) names.push(current.name);
+        return names.reverse().join(' / ');
+      });
+  }
+  function selectedCount() { return Object.keys(selected).filter(function (key) { return selected[key]; }).length; }
+  function updateSelectionSummary() {
+    var paths = selectionPaths();
+    selectionSummary.textContent = 'Selected sources: ' + selectedCount();
+    selectionSummary.title = paths.length ? paths.join('\n') : 'No sources selected';
+    selectAll.checked = projects.length > 0 && projects.every(function (p) { return !!selected[p.key]; });
+    selectAll.indeterminate = !selectAll.checked && paths.length > 0;
+  }
+  function toggleSelection(node, checked) {
+    if (inheritedSelection(node)) return;
+    if (checked) {
+      Object.keys(selected).forEach(function (key) {
+        if (selected[key] && nodes[key] && isDescendant(nodes[key], node)) delete selected[key];
+      });
+      selected[node.key] = true;
+    } else {
+      delete selected[node.key];
+    }
+    updateSelectionSummary();
+    invalidatePreview();
+    renderTree();
+  }
+  function makeText(text, cls) {
+    var div = document.createElement('div');
+    div.className = cls;
+    div.textContent = text;
+    return div;
+  }
+  function renderNode(node, depth) {
+    var row = document.createElement('div');
+    row.className = 'tree-row' + (inheritedSelection(node) ? ' dim' : '');
+    row.style.paddingLeft = (7 + depth * 17) + 'px';
+    var expand = document.createElement('button');
+    expand.type = 'button'; expand.className = 'expander';
+    expand.textContent = node.loading ? '…' : (node.expanded ? '▾' : '▸');
+    expand.title = node.expanded ? 'Collapse' : 'Expand';
+    expand.disabled = node.loading || !!pendingNode || loadingProjects;
+    expand.addEventListener('click', function () { toggleExpand(node); });
+    var checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.checked = !!selected[node.key] || inheritedSelection(node);
+    checkbox.indeterminate = !checkbox.checked && hasSelectedDescendant(node);
+    checkbox.disabled = inheritedSelection(node);
+    checkbox.title = checkbox.disabled ? 'Already selected through parent folder or project' : 'Include in export';
+    checkbox.addEventListener('change', function () { toggleSelection(node, checkbox.checked); });
+    var label = document.createElement('span');
+    label.className = 'tree-label';
+    label.textContent = (node.kind === 'project' ? '▣ ' : '▱ ') + node.name;
+    label.title = node.name;
+    label.addEventListener('click', function () { toggleExpand(node); });
+    row.appendChild(expand); row.appendChild(checkbox); row.appendChild(label);
+    if (node.loaded) {
+      var count = document.createElement('span'); count.className = 'tree-count';
+      count.textContent = node.children.length + ' / ' + node.files.length;
+      count.title = 'Folders / files'; row.appendChild(count);
+    }
+    tree.appendChild(row);
+    if (!node.expanded) return;
+    if (node.loading) {
+      var loadingRow = makeText('Loading contents…', 'empty');
+      tree.appendChild(loadingRow);
+      return;
+    }
+    if (!node.loaded) return;
+    node.children.forEach(function (child) { renderNode(child, depth + 1); });
+    if (node.files.length) {
+      node.files.forEach(function (file) {
+        var div = document.createElement('div');
+        div.className = 'file-row' + (inheritedSelection(file) ? ' dim' : '');
+        div.style.paddingLeft = '72px';
+        var check = document.createElement('input');
+        check.type = 'checkbox';
+        check.checked = !!selected[file.key] || inheritedSelection(file);
+        check.disabled = inheritedSelection(file);
+        check.title = check.disabled ? 'Included by parent folder or project' : 'Select this design only';
+        check.addEventListener('change', function () { toggleSelection(file, check.checked); });
+        var label = document.createElement('span');
+        label.className = 'file-label';
+        label.textContent = '• ' + file.name;
+        label.title = file.name;
+        label.addEventListener('click', function () {
+          if (!check.disabled) toggleSelection(file, !check.checked);
+        });
+        div.appendChild(check); div.appendChild(label);
+        tree.appendChild(div);
+      });
+    } else if (!node.children.length) {
+      var emptyRow = makeText('Folder is empty', 'empty');
+      tree.appendChild(emptyRow);
+    }
+  }
+  function renderTree() {
+    tree.textContent = '';
+    if (!projects.length) {
+      tree.appendChild(makeText(loadingProjects ? 'Loading projects…' : 'No projects loaded.', 'empty'));
+    } else {
+      projects.forEach(function (p) { renderNode(p, 0); });
+    }
+    updateSelectionSummary();
+    updatePreviewAvailability();
+  }
+  function toggleExpand(node) {
+    if (pendingNode || loadingProjects) return;
+    if (node.expanded) { node.expanded = false; renderTree(); return; }
+    node.expanded = true;
+    if (node.loaded) { renderTree(); return; }
+    pendingNode = node; node.loading = true;
+    renderTree();
+    try { send('browse_folder', { project_id:node.projectId, folder_id:node.kind === 'project' ? null : node.id }); }
+    catch (err) {
+      node.loading = false; node.expanded = false; pendingNode = null;
+      log('Folder request error: ' + String(err)); renderTree();
+    }
+  }
+  function showProjects(result) {
+    loadingProjects = false; refreshButton.disabled = false;
+    if (!result || !result.ok || !Array.isArray(result.projects)) {
+      projectSummary.className = 'message error';
+      projectSummary.textContent = 'Failed to load projects';
+      log('API error: ' + ((result && result.error) || 'no details'));
+      return;
+    }
+    nodes = Object.create(null); selected = Object.create(null); projects = [];
+    result.projects.forEach(function (entry) {
+      if (!entry.id || typeof entry.id !== 'string') return;
+      projects.push(makeNode('project', entry.id, null, String(entry.name || '(untitled)'), null));
+    });
+    projectSummary.className = 'hint';
+    projectSummary.textContent = 'Projects: ' + projects.length;
+    selectAll.disabled = projects.length === 0;
+    log('Projects loaded from active hub: ' + projects.length);
+    renderTree();
+  }
+  function showFolder(result) {
+    var node = pendingNode;
+    pendingNode = null;
+    if (!node) { log('Unexpected folder response ignored'); return; }
+    node.loading = false;
+    if (!result || !result.ok || result.project_id !== node.projectId ||
+        (!Array.isArray(result.folders)) || (!Array.isArray(result.files))) {
+      node.expanded = false;
+      log('Failed to read folder "' + node.name + '": ' + ((result && result.error) || 'invalid API response'));
+      renderTree(); return;
+    }
+    node.children = [];
+    result.folders.forEach(function (item) {
+      if (typeof item.id !== 'string' || !item.id) return;
+      node.children.push(makeNode('folder', node.projectId, item.id, String(item.name || '(untitled)'), node));
+    });
+    node.files = result.files.filter(function (item) {
+      return item && typeof item.id === 'string' && !!item.id && typeof item.name === 'string';
+    }).map(function (item) {
+      return makeNode('file', node.projectId, item.id, item.name, node);
+    });
+    node.loaded = true;
+    log('Opened folder: ' + node.name + ' (folders: ' + node.children.length + ', files: ' + node.files.length + ')');
+    renderTree();
+  }
+  refreshButton.addEventListener('click', function () {
+    invalidatePreview();
+    if (loadingProjects || pendingNode) return;
+    loadingProjects = true; refreshButton.disabled = true; selectAll.disabled = true;
+    projectSummary.className = 'hint'; projectSummary.textContent = 'Loading projects…';
+    projects = []; nodes = Object.create(null); selected = Object.create(null);
+    renderTree();
+    try { send('list_projects', {}); }
+    catch (err) {
+      loadingProjects = false; refreshButton.disabled = false;
+      projectSummary.className = 'message error'; projectSummary.textContent = 'No Fusion connection';
+      log('Project request error: ' + String(err)); renderTree();
+    }
+  });
+  selectAll.addEventListener('change', function () {
+    invalidatePreview();
+    selected = Object.create(null);
+    if (selectAll.checked) projects.forEach(function (node) { selected[node.key] = true; });
+    renderTree();
+  });
+  document.getElementById('ping').addEventListener('click', function () {
+    apiStatus.textContent = 'Checking…';
+    try { send('ping', {}); }
+    catch (err) { apiStatus.textContent = 'Connection error'; log('API error: ' + String(err)); }
+  });
+  // Do not use cached folder data as a source for real exports.
+  // Startup uses a request/acknowledgement handshake rather than a fixed delay.
+  var fusionReady = false;
+  var readinessAttempts = 0;
+  function onFusionReady() {
+    if (fusionReady) return;
+    fusionReady = true;
+    // Defer until the native -> HTML event handler finishes (avoid reentrancy).
+    window.setTimeout(function () {
+      try { send('load_export_settings', {}); }
+      catch (err) {
+        outputFolderStatus.textContent = 'No Fusion connection to load settings.';
+        log('Settings request error: ' + String(err));
+      }
+      if (!loadingProjects && projects.length === 0) refreshButton.click();
+    }, 60);
+  }
+  function waitForFusion() {
+    if (fusionReady) return;
+    readinessAttempts += 1;
+    try { send('get_ui_theme', {}); }
+    catch (err) { /* Fusion bridge may not yet be available. */ }
+    if (fusionReady) return;
+    if (readinessAttempts < 30) {
+      window.setTimeout(waitForFusion, 500);
+    } else if (!loadingProjects && projects.length === 0) {
+      projectSummary.className = 'message error';
+      projectSummary.textContent = 'No Fusion connection — click Refresh';
+      log('Fusion API did not respond. You can refresh manually.');
+    }
+  }
+  // One job for all selected documents/versions, progressed by Fusion custom events.
+  var exportButton = document.getElementById('run-export');
+  var pauseExport = document.getElementById('pause-export');
+  var resumeExport = document.getElementById('resume-export');
+  var stopExport = document.getElementById('stop-export');
+  var exportRunStatus = document.getElementById('export-run-status');
+  var exportBusy = false;
+  var exportPaused = false;
+  var lastVersionsNoticeJob = '';
+  function updateRunControls() {
+    enableSettings(settingsReady && !exportBusy);
+    refreshButton.disabled = exportBusy || loadingProjects;
+    selectAll.disabled = exportBusy || projects.length === 0;
+    pauseExport.disabled = !exportBusy || exportPaused;
+    resumeExport.disabled = !exportBusy || !exportPaused;
+    stopExport.disabled = !exportBusy;
+    updatePreviewAvailability();
+  }
+  function showRunProgress(result) {
+    if (!result || !result.ok) {
+      exportBusy = false;
+      exportPaused = false;
+      if (result && result.code === 'INTEGRITY_BLOCKED') {
+        var problem = result.problem || {};
+        var issue = problem.state || 'UNKNOWN';
+        var target = Array.isArray(problem.path) ? problem.path.join(' / ') : String(problem.path || '');
+        var reason = issue === 'CORRUPT' ? 'Backup file is corrupted or changed' :
+          issue === 'UNSAFE' ? 'Unsafe local path' :
+          issue === 'NATIVE_CONFLICT' ? 'Both F3D and F3Z exist' : 'Backup requires review';
+        exportRunStatus.textContent = 'Export was not started. ' + reason + '. Existing files were not changed.';
+        log('INTEGRITY_BLOCKED: ' + reason + (target ? ' — ' + target : ''));
+        if (problem.expected_sha256 && problem.actual_sha256) {
+          log('SHA-256: expected ' + problem.expected_sha256 + '; actual ' + problem.actual_sha256);
+        }
+      } else {
+        exportRunStatus.textContent = (result && result.message) || 'Export could not start. See Log.';
+        log('Export start error: ' + ((result && result.error) || 'No additional details'));
+      }
+      renderReleaseProgress(result);
+      updateRunControls();
+      return;
+    }
+    var status = result.status || 'UNKNOWN';
+    var labels = {'RUNNING':'Running', 'PAUSED':'Pause', 'STOPPED':'Stopped',
+      'COMPLETED':'Completed', 'COMPLETED_WITH_WARNINGS':'Completed with warnings',
+      'PARTIAL_SUCCESS':'Completed with errors', 'FAILED_SAFE':'Stopped for safety review'};
+    exportRunStatus.textContent = (labels[status] || status) + ': ' + (result.completed || 0) + '/' +
+      (result.total || 0) + ' versions. Created files: ' + (result.passed || 0) +
+      ', errors: ' + (result.failed || 0) + ', skipped: ' + (result.skipped || 0) +
+      (result.unverified ? ', unverified SHA-256: ' + result.unverified : '') +
+      (result.newer_versions_count ? ', new cloud versions: ' + result.newer_versions_count : '') +
+      '. ' + (status === 'FAILED_SAFE' ? 'Do not close Fusion documents manually. Review the job report.' : (result.message || ''));
+    exportPaused = status === 'PAUSED';
+    exportBusy = status === 'RUNNING' || status === 'PAUSED';
+    if (result.job_id && lastVersionsNoticeJob !== result.job_id) {
+      lastVersionsNoticeJob = result.job_id;
+      log('SHA-256 verified: ' + (result.integrity_verified || 0) +
+        '; unfinished jobs: ' + (result.unfinished_prior_count || 0) +
+        '; retained temporary files: ' + (result.retained_temp_count || 0) + '.');
+      if (result.newer_versions_count) {
+        log('New cloud revisions found: ' + result.newer_versions_count + '.');
+        (result.newer_versions_sample || []).forEach(function(item) {
+          log('New revision: ' + item.name + ' v' + item.previously_processed_max +
+            ' → v' + item.current_cloud_latest);
+        });
+      } else { log('No newer cloud revisions for this destination.'); }
+    }
+    if (result.report) log('Report: ' + result.report + ' · ' + exportRunStatus.textContent);
+    renderReleaseProgress(result);
+    updateRunControls();
+  }
+  exportButton.addEventListener('click', function () {
+    if (exportButton.disabled || exportBusy || settingsSaveBusy) return;
+    var settings = currentExportSettings();
+    var sources = previewSources();
+    if (!settings.output_folder || !sources.length || !settings.formats.length) return;
+    var message = 'Start F360 Vault export?\n\nDestination: ' +
+      settings.output_folder + '\nSources: ' + sources.length +
+      '\nFormats: ' + settings.formats.join(', ') + '\nVersions: ' + settings.version_mode +
+      '\n\nExisting backups are never overwritten. Cloud originals remain unchanged.';
+    openCompactConfirmation(settings, sources);
+  });
+  [['pause',pauseExport], ['resume',resumeExport], ['stop',stopExport]].forEach(function(pair) {
+    pair[1].addEventListener('click', function () {
+      if (!exportBusy) return;
+      try { send('vault_export_control', {action: pair[0]}); }
+      catch (err) { log('Queue control error: ' + String(err)); }
+    });
+  });
+  window.fusionJavaScriptHandler = {
+    handle: function (action, data) {
+      try {
+        var result = JSON.parse(data || '{}');
+        if (action === 'pong') {
+          apiStatus.textContent = result.ok ? 'Connected' : 'API error';
+          log(result.ok ? 'Fusion API: connected' : 'Fusion API: check failed');
+        } else if (action === 'ui_theme') {
+          document.documentElement.setAttribute('data-f360-theme', result.theme === 'dark' ? 'dark' : 'light');
+          onFusionReady();
+        } else if (action === 'projects_result') {
+          showProjects(result);
+        } else if (action === 'folder_result') {
+          showFolder(result);
+        } else if (action === 'output_folder_result') {
+          showOutputFolder(result);
+        } else if (action === 'export_settings_result') {
+          showExportSettings(result);
+        } else if (action === 'export_settings_saved') {
+          showSettingsSaved(result);
+        } else if (action === 'export_preview_result') {
+          showExportPreview(result);
+        } else if (action === 'local_path_plan_result') {
+          showLocalPathPlan(result);
+        } else if (action === 'aps_connect_result' || action === 'aps_status_result') {
+          showApsConnection(result);
+        } else if (action === 'open_report_folder_result') {
+          if (!result.ok) releaseWarning.textContent = 'Cannot open report folder: ' + String(result.error || 'Unknown error');
+        } else if (action === 'vault_export_start_result' || action === 'vault_export_progress') {
+          showRunProgress(result);
+        }
+      } catch (err) { log('Response handling error: ' + String(err)); }
+      return 'OK';
+    }
+  };
+
+  // Release layout moves existing DOM controls without cloning event handlers.
+  var releaseLine, releaseModel, releaseCounts, releaseWarning, releaseFill;
+  function releaseUpdateView(name) {
+    refreshButton.style.display = name === 'sources' ? '' : 'none';
+    exportButton.style.display = name === 'export' ? '' : 'none';
+  }
+  function initReleaseLayout() {
+    var navLog = document.querySelector('.tab[data-tab="journal"]');
+    if (navLog) navLog.style.display = 'none';
+    var preflight = document.getElementById('preview-group');
+    if (preflight) preflight.style.display = 'none';
+    var footer = document.querySelector('footer.footer');
+    if (!footer) throw new Error('F360 Vault footer is unavailable.');
+    refreshButton.removeAttribute('style');
+    refreshButton.className = 'primary';
+    refreshButton.textContent = 'Refresh';
+    refreshButton.title = 'Reload projects from the current hub (clears selection)';
+    footer.appendChild(refreshButton);
+    var panel = document.createElement('section');
+    panel.id = 'release-progress';
+    panel.setAttribute('aria-live', 'polite');
+    panel.innerHTML = '<h2>Export progress</h2>' +
+      '<div id="release-line">Ready to export.</div>' +
+      '<div id="release-meter"><span id="release-meter-fill"></span></div>' +
+      '<div id="release-model"></div>' +
+      '<div id="release-counts">Created: 0 | Verified: 0 | No geometry: 0 | Errors: 0</div>' +
+      '<div id="release-warning"></div>' +
+      '<div id="release-actions"></div>' +
+      '<button id="release-report-button" class="compact-button" type="button" disabled>Open Report Folder</button>' +
+      '<div id="release-report-path" style="display:none"></div>';
+    document.getElementById('page-export').appendChild(panel);
+    releaseLine = document.getElementById('release-line');
+    releaseModel = document.getElementById('release-model');
+    releaseCounts = document.getElementById('release-counts');
+    releaseWarning = document.getElementById('release-warning');
+    releaseFill = document.getElementById('release-meter-fill');
+    var actions = document.getElementById('release-actions');
+    actions.appendChild(pauseExport);
+    actions.appendChild(resumeExport);
+    actions.appendChild(stopExport);
+    document.getElementById('release-report-button').addEventListener('click', function () {
+      if (!releaseReportJobId) return;
+      try { send('open_report_folder', {job_id:releaseReportJobId}); }
+      catch (err) { releaseWarning.textContent = 'Cannot open report folder: ' + String(err); }
+    });
+    // Do not delete the log node: export events and diagnostics still use it.
+    releaseUpdateView('sources');
+  }
+  function renderReleaseProgress(result) {
+    if (!releaseLine || !result) return;
+    var reportButton = document.getElementById('release-report-button');
+    var reportPath = document.getElementById('release-report-path');
+    reportPath.textContent = '';
+    releaseReportJobId = result.report && result.job_id ? String(result.job_id) : '';
+    reportButton.disabled = !releaseReportJobId;
+    if (!result.ok) {
+      releaseLine.textContent = 'Export not started: ' +
+        String(result.message || result.error || 'Review required').split('\n')[0];
+      releaseModel.textContent = '';
+      return;
+    }
+    var total = Number(result.total || 0), completed = Number(result.completed || 0);
+    var percent = total > 0 ? Math.max(0, Math.min(100, Math.round(100 * completed / total))) : 0;
+    var status = result.status || 'IDLE';
+    var docs = Number(result.document_count || 0);
+    releaseFill.style.width = percent + '%';
+    releaseLine.textContent = (status === 'PARTIAL_SUCCESS' ? 'Incomplete backup' : status.replace(/_/g,' ')) +
+      ' — ' + completed + ' / ' + total + ' versions (' + percent + '%)' +
+      (docs ? ' · ' + docs + ' designs' : '');
+    releaseModel.textContent = result.up_next_name ?
+      ('Next: ' + result.up_next_name + ' — v' + result.up_next_version) :
+      ((total && completed >= total) ? 'Queue finished.' : '');
+    releaseCounts.textContent = 'Created: ' + Number(result.passed || 0) +
+      ' | Verified: ' + Number(result.verified_count || 0) +
+      ' | No geometry: ' + Number(result.no_geometry_count || 0) +
+      ' | Errors: ' + Number(result.failed || 0);
+    var unsupported = Number(result.unsupported_f3z_count || 0);
+    if (unsupported) {
+      releaseWarning.textContent = 'INCOMPLETE: ' + unsupported +
+        ' linked assembly version(s) need F3Z recovery. See Manual_F3Z_Required.txt in the report folder.';
+    } else if (status === 'FAILED_SAFE') {
+      releaseWarning.textContent = 'Safety stop. Do not close Fusion documents manually; inspect the job report.';
+    } else {
+      releaseWarning.textContent = '';
+    }
+  }
+  var releaseReportJobId = '';
+  var releaseConfirmOpen = false;
+  var releaseConfirmSettings = null, releaseConfirmSources = null;
+  function releaseEscConfirm(evt) {
+    if (releaseConfirmOpen && evt.key === 'Escape') { releaseHideConfirm(); evt.preventDefault(); }
+  }
+  function releaseHideConfirm() {
+    releaseConfirmOpen = false;
+    releaseConfirmSettings = null;
+    releaseConfirmSources = null;
+    var overlay = document.getElementById('release-confirm-overlay');
+    if (overlay) overlay.className = '';
+  }
+  function releaseText(id, value) {
+    document.getElementById(id).textContent = value;
+  }
+  function releaseConfirmStart() {
+    if (!releaseConfirmOpen || !releaseConfirmSettings || !releaseConfirmSources) return;
+    var settings = releaseConfirmSettings, sources = releaseConfirmSources;
+    releaseHideConfirm();
+    if (exportBusy || settingsSaveBusy || exportButton.disabled || !settingsReady) return;
+    if (JSON.stringify(settings) !== JSON.stringify(currentExportSettings()) ||
+        JSON.stringify(sources) !== JSON.stringify(previewSources())) {
+      releaseWarning.textContent = 'Export settings or sources changed. Review before starting.';
+      return;
+    }
+    exportBusy = true;
+    exportPaused = false;
+    exportRunStatus.textContent = 'Checking fresh cloud data and output paths...';
+    releaseLine.textContent = 'Checking cloud data and backup integrity...';
+    updateRunControls();
+    try { send('vault_export_start', {sources: sources, settings: settings}); }
+    catch (err) { showRunProgress({ok:false,error:String(err)}); }
+  }
+  function openCompactConfirmation(settings, sources) {
+    if (releaseConfirmOpen || !settings.output_folder || !sources.length || !settings.formats.length) return;
+    releaseConfirmSettings = JSON.parse(JSON.stringify(settings));
+    releaseConfirmSources = JSON.parse(JSON.stringify(sources));
+    releaseText('release-confirm-folder', settings.output_folder);
+    releaseText('release-confirm-sources', String(sources.length));
+    releaseText('release-confirm-versions', settings.version_mode === 'all' ? 'All history' : 'Latest');
+    releaseText('release-confirm-formats', settings.formats.map(function(f) {
+      return f === 'native' ? 'F3D / F3Z' : f.toUpperCase();
+    }).join(' · '));
+    var overlay = document.getElementById('release-confirm-overlay');
+    releaseConfirmOpen = true;
+    overlay.className = 'open';
+    document.getElementById('release-confirm-start').focus();
+  }
+  function initReleaseConfirmation() {
+    var overlay = document.createElement('div');
+    overlay.id = 'release-confirm-overlay';
+    overlay.setAttribute('role','presentation');
+    overlay.innerHTML = '<div id="release-confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="release-confirm-title">' +
+      '<h2 id="release-confirm-title">Confirm export</h2>' +
+      '<div class="confirm-detail"><strong>Destination</strong><div id="release-confirm-folder"></div></div>' +
+      '<div class="confirm-detail">Sources: <b id="release-confirm-sources"></b> · Versions: <b id="release-confirm-versions"></b></div>' +
+      '<div class="confirm-detail"><strong>Formats</strong><div id="release-confirm-formats"></div></div>' +
+      '<div class="confirm-detail">Existing backups are never overwritten. Cloud documents are not modified.</div>' +
+      '<div class="confirm-detail"><strong>IMPORTANT:</strong> Large exports may take a minute or longer to start while Fusion checks cloud data and backups. Please wait; do not restart Fusion.</div>' +
+      '<div class="confirm-actions"><button class="compact-button" id="release-confirm-cancel" type="button">Cancel</button>' +
+      '<button class="primary" id="release-confirm-start" type="button">Start Export</button></div></div>';
+    document.body.appendChild(overlay);
+    document.getElementById('release-confirm-cancel').addEventListener('click', releaseHideConfirm);
+    document.getElementById('release-confirm-start').addEventListener('click', releaseConfirmStart);
+    overlay.addEventListener('click', function(evt) {
+      if (evt.target === overlay) releaseHideConfirm();
+    });
+    document.addEventListener('keydown', releaseEscConfirm);
+  }
+  initReleaseLayout();
+  initReleaseConfirmation();
+  // APS F3Z: OAuth is initiated by one explicit user action; bearer token never enters HTML.
+  var apsConnectionState = 'DISCONNECTED';
+  function initApsConnection() {
+    var panel = document.createElement('div');
+    panel.id = 'aps-connection-bar';
+    panel.innerHTML = '<strong>Linked assembly backups (F3Z)</strong>' +
+      '<div class="form-row" style="margin-top:7px">' +
+      '<button id="aps-connect-button" class="compact-button" type="button">Connect Autodesk</button>' +
+      '<span id="aps-connect-status" class="hint aps-offline" role="status">Not connected</span></div>' +
+      '<small id="aps-advice" class="aps-advice aps-required">Full F3Z backups for linked assemblies require an Autodesk connection. Other formats work offline.</small>';
+    var sourcePage = document.getElementById('page-sources');
+    var cloudTree = document.getElementById('cloud-tree');
+    if (!sourcePage || !cloudTree || cloudTree.parentNode !== sourcePage) {
+      throw new Error('Sources page is unavailable for Autodesk connection.');
+    }
+    // The Autodesk connection comes before choosing all projects or opening the tree.
+    var selectionBar = sourcePage.querySelector('.selection-bar');
+    if (!selectionBar || selectionBar.parentNode !== sourcePage) {
+      throw new Error('Source selection bar is missing.');
+    }
+    sourcePage.insertBefore(panel, selectionBar);
+    document.getElementById('aps-connect-button').addEventListener('click', function () {
+      if (apsConnectionState === 'CONNECTING') return;
+      apsConnectionState = 'CONNECTING';
+      document.getElementById('aps-connect-status').textContent = 'Opening Autodesk sign-in...';
+      document.getElementById('aps-connect-button').disabled = true;
+      try { send('aps_connect', {}); }
+      catch (err) {
+        apsConnectionState = 'ERROR';
+        document.getElementById('aps-connect-status').textContent = 'Cannot start authorization: ' + String(err);
+        document.getElementById('aps-connect-button').disabled = false;
+      }
+    });
+    window.setInterval(function () {
+      try { send('aps_status', {}); }
+      catch (err) { /* Don't interrupt Fusion export for an APS status poll. */ }
+      if (exportBusy) {
+        try { send('vault_export_status', {}); }
+        catch (err) { /* Next Fusion event may still provide the update. */ }
+      }
+    }, 2300);
+    try { send('aps_status', {}); }
+    catch (err) { document.getElementById('aps-connect-status').textContent = 'APS status unavailable'; }
+  }
+  function showApsConnection(result) {
+    if (!result) return;
+    apsConnectionState = String(result.state || 'ERROR');
+    var button = document.getElementById('aps-connect-button');
+    var label = document.getElementById('aps-connect-status');
+    if (!button || !label) return;
+    button.disabled = apsConnectionState === 'CONNECTING';
+    button.textContent = result.connected ? 'Reconnect Autodesk' : 'Connect Autodesk';
+    label.textContent = result.connected ? 'Connected · APS F3Z ready' :
+      (apsConnectionState === 'CONNECTING' ? 'Connecting to Autodesk...' :
+        apsConnectionState === 'ERROR' ? 'Not connected: ' + String(result.error || 'Authorization failed') :
+        'Not connected');
+    label.className = 'hint ' + (result.connected ? 'aps-ready' :
+      apsConnectionState === 'CONNECTING' ? 'aps-connecting' :
+      apsConnectionState === 'ERROR' ? 'aps-error' : 'aps-offline');
+    var advice = document.getElementById('aps-advice');
+    if (advice) {
+      advice.className = 'aps-advice ' + (result.connected ? 'aps-enabled' : 'aps-required');
+      advice.textContent = result.connected ?
+        'Full F3Z backups for linked assemblies are enabled through Autodesk APS.' :
+        'Full F3Z backups for linked assemblies require an Autodesk connection. Other formats work offline.';
+    }
+  }
+  initApsConnection();
+  log('F360 Vault: Autodesk APS F3Z available.');
+  waitForFusion();
+})();
+</script>
+</body>
+</html>

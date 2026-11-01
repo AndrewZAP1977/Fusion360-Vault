@@ -1,0 +1,13 @@
+{
+  "autodeskProduct": "Fusion360",
+  "type": "addin",
+  "id": "89bf0f66-4005-4c72-8a04-9edc045eab47",
+  "author": "AndrewZAP1977",
+  "description": {
+    "": "F360 Vault - Fusion 360 project backup and export tool"
+  },
+  "version": "0.4.0",
+  "runOnStartup": false,
+  "supportedOS": "windows",
+  "editEnabled": true
+}

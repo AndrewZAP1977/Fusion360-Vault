@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+
+# Local export data / logs
+exports/
+backups/
+*.log
+.f360vault-state/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+# Private runtime data stored inside the installed add-in
+/F360Vault/data/
